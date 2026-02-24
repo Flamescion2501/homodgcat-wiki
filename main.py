@@ -14,7 +14,7 @@ LANGS = os.environ["LANGS"].split(",")
 LangRoutes = str_enum("LangRoutes", *LANGS, *[_.lower() for _ in LANGS])
 DEFAULT_LANG = os.environ["DEFAULT_LANG"]
 
-TALK_DATA_PATH = os.environ["TALK_DATA_PATH"]
+TALK_DATA_DIR = os.environ["TALK_DATA_DIR"]
 
 app = FastHTML(hdrs=Theme.blue.headers())
 
@@ -23,15 +23,13 @@ with open("text.json") as f:
 
 talk_data = {}
 for lang in LANGS:
-    talk_data[lang] = (
-        pl.read_parquet(f"{TALK_DATA_PATH}/GI_Talk_{lang}.parquet")
-        if TALK_DATA_PATH.startswith("http")
-        else pl.read_parquet(
-            Path(os.environ["TALK_DATA_PATH"]) / f"GI_Talk_{lang}.parquet"
-        )
+    talk_data_path = (
+        f"{TALK_DATA_DIR}/GI_Talk_{lang}.parquet"
+        if TALK_DATA_DIR.startswith("http")
+        else Path(TALK_DATA_DIR) / f"GI_Talk_{lang}.parquet"
     )
     talk_data[lang] = (
-        talk_data[lang]
+        pl.read_parquet(talk_data_path)
         .with_columns(
             talkRoleIdName=pl.when(pl.col.talkRoleType == "TALK_ROLE_PLAYER")
             .then(pl.lit(TEXT["SPEAKER"]["TALK_ROLE_PLAYER"][lang]))
